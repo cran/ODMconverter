@@ -1,0 +1,14 @@
+05e01470e1ae82a635e3ec3fbb9f09a1 *DESCRIPTION
+7a19fee4c642dcdee75ed9e371a6043e *NAMESPACE
+4cbaedcfd57b7f979da02e5771a17203 *R/ODM2R.R
+4cb5eff302596830573861dd93264eae *R/ODM2office.R
+5dcb05ce37fed35cb1dd61278fc5a8fa *R/R2ODM.R
+d54b01a46cd69643d2e4fab0beb32ba5 *R/office2ODM.R
+d33175a5bad570928483745c978af228 *inst/extdata/ODM-Test.xlsx
+0e59c43b317cd05025404c2d0aa82662 *inst/extdata/ODM-Test_S.0000.xml
+ea96b22a2a7411d3097aa8d559b22446 *inst/extdata/ODM-Test_S.0000.xml.R
+89a224e0042d0c6f602ddffed16365ec *man/ODM2R.Rd
+5cdb1e02c34450d6ad3aeb80fa4fc8a1 *man/ODM2office.Rd
+eef21f528211e6b3416a695072653a3b *man/ODMconverter-package.Rd
+e4f36a2877d9119c3701063d84e7509f *man/R2ODM.Rd
+c3ff5241fb267dbf35c5e0f410fd55d9 *man/office2ODM.Rd
