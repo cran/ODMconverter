@@ -71,7 +71,10 @@ attr(odmdata$I.1004,"labels2") <- c("maennlich","weiblich")
 attr(odmdata$I.1004,"Alias_Contexts") <- c("UMLS CUI","SNOMED CT 2010_0731")
 attr(odmdata$I.1004,"UMLS CUI") <- c("C0024554","C0015780")
 attr(odmdata$I.1004,"SNOMED CT 2010_0731") <- c("248153007","248152002")
-attr(odmdata, "Alias_Contexts") <- c("UMLS CUI","SNOMED CT 2010_0731","LOINC")
-attr(odmdata, "UMLS CUI") <- c("C1516879","","","","","","","")
-attr(odmdata, "SNOMED CT 2010_0731") <- c("","102518004","152322001","139865004","439401001","","","")
-attr(odmdata, "LOINC") <- c("","","","","","","38483-4","")
+attr(odmdata, "Alias_Items") <- matrix(ncol=3,byrow=T, data=c(
+"I.1001","UMLS CUI","C1516879",
+"I.1002","SNOMED CT 2010_0731","102518004",
+"I.1003","SNOMED CT 2010_0731","152322001",
+"I.1004","SNOMED CT 2010_0731","139865004",
+"I.1005","SNOMED CT 2010_0731","439401001",
+"I.1007","LOINC","38483-4" ))

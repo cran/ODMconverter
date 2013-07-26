@@ -76,6 +76,8 @@ IGNU <- attr(odmdata,"itemgroupnames_unique")
 IGNU2 <- attr(odmdata,"itemgroupnames_unique_en")
 IGNU3 <- attr(odmdata,"itemgroupnames_unique_de")
 IGAlias <- attr(odmdata,"IGAlias")
+mx <- attr(odmdata,"Alias_Items")
+Contexts <- unique(mx[,2])
 
 if (is.null(IGNU)) IGNU <- as.vector("IG.1")
 for (i in 1:length(IGU)) {
@@ -114,6 +116,15 @@ varlabels_en <- attr(odmdata,"varlabels_en")
 if (is.null(varlabels_en)) varlabels_en <- varlabels
 varlabels_de <- attr(odmdata,"varlabels_de")
 if (is.null(varlabels_de)) varlabels_de <- varlabels
+f3 <- function (x) gsub("<","&lt;",x)
+f4 <- function (x) gsub(">","&gt;",x)
+varlabels <- sapply(varlabels,f3,USE.NAMES=F)
+varlabels <- sapply(varlabels,f4,USE.NAMES=F)
+varlabels_en <- sapply(varlabels_en,f3,USE.NAMES=F)
+varlabels_en <- sapply(varlabels_en,f4,USE.NAMES=F)
+varlabels_de <- sapply(varlabels_de,f3,USE.NAMES=F)
+varlabels_de <- sapply(varlabels_de,f4,USE.NAMES=F)
+
 DataTypes <- attr(odmdata,"DataTypes")
 if (is.null(DataTypes)) {
    DataTypes <- rep("string",n)
@@ -122,7 +133,6 @@ if (is.null(DataTypes)) {
       if (typeof(odmdata[,i]) == "double")  DataTypes[i] <- "float"
    }
 }
-Contexts <- attr(odmdata,"Alias_Contexts")
 CL <- 0
 CLxml <- ""
 for (i in 1:n)
@@ -163,13 +173,22 @@ for (i in 1:n)
    }
 
    # Alias for items
-   if (length(Contexts) > 0) for (ii in 1:length(Contexts))
+   for (ii in 1:nrow(mx))
    {
-      aname <- attr(odmdata,Contexts[ii])[i]
-      if (aname == "") next
-      cat("   <Alias Context=\"", Contexts[ii], 
-             "\" Name=\"", aname, "\" />\n", sep="")
+      if (mx[ii,1] == names(odmdata)[i])
+      {
+         cat("   <Alias Context=\"", mx[ii,2], "\" Name=\"", mx[ii,3], "\" />\n", sep="")
+      }
    }
+
+   #if (length(Contexts) > 0) for (ii in 1:length(Contexts))
+   #{
+   #   aname <- attr(odmdata,Contexts[ii])[i]
+   #   if (aname == "") next
+   #   cat("   <Alias Context=\"", Contexts[ii], 
+   #          "\" Name=\"", aname, "\" />\n", sep="")
+   #}
+
    cat("</ItemDef>\n")
 }
 cat(CLxml)

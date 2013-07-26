@@ -67,7 +67,8 @@ for (i in 1: length(IGnodes) )
       context <- xmlAttrs(anode)["Context"]
       name <- xmlAttrs(anode)["Name"]
       if (sum(Contexts == context) == 0) Contexts <- c(Contexts, context) 
-      output_itemgroup[Contexts == context] <- name
+      if ( is.na(output_itemgroup[Contexts == context]) ) { output_itemgroup[Contexts == context] <- name }
+      else { output_itemgroup[Contexts == context] <- paste(output_itemgroup[Contexts == context], name, sep="   ") }
    } 
    output_itemgroup[is.na(output_itemgroup)] <- ""
    output_itemgroup <- paste(output_itemgroup, collapse=";", sep="")  
@@ -98,7 +99,7 @@ for (i in 1: length(IGnodes) )
             itemtextlong <- gsub(";",",",itemtextlong)
             itemtext_de <- gsub(";",",",itemtext_de)
             tmp <- c(DataType, itemtext, itemtextlong, itemtext_de)
-            # alias
+            # alias items
             anodes <- Inode[names(xmlChildren(Inode)) == "Alias"]
             if (length(anodes) > 0 ) for (ii in 1: length(anodes) )
             {
@@ -106,7 +107,15 @@ for (i in 1: length(IGnodes) )
                context <- xmlAttrs(anode)["Context"]
                name <- xmlAttrs(anode)["Name"]
                if (sum(Contexts == context) == 0) Contexts <- c(Contexts, context) 
-               tmp[Contexts == context] <- name
+               if ( is.na(tmp[Contexts == context]) ) { tmp[Contexts == context] <- name }
+               else
+               { 
+                  tmp[is.na(tmp)] <- ""
+                  tmp2 <- paste(tmp, collapse=";", sep="") 
+                  output <- paste(output, tmp2,"\n", sep="")
+                  tmp <- c("postcoordination","","","")
+                  tmp[Contexts == context] <- name 
+               }
             }
             tmp[is.na(tmp)] <- ""
             tmp2 <- paste(tmp, collapse=";", sep="") 
@@ -138,7 +147,7 @@ for (i in 1: length(IGnodes) )
                               text2 <- xmlValue(CLInode[["Decode"]][2][["TranslatedText"]])
                            }
                         }
-						# Alias for codelistitems
+				# Alias for codelistitems
                         tmp <- c("codelistitem", CodedValue, text1,text2)
                         anodes <- CLInode[names(xmlChildren(CLInode)) == "Alias"]
                         if (length(anodes) > 0 ) for (ii in 1: length(anodes) )
@@ -147,7 +156,9 @@ for (i in 1: length(IGnodes) )
                            context <- xmlAttrs(anode)["Context"]
                            name <- xmlAttrs(anode)["Name"]
                            if (sum(Contexts == context) == 0) Contexts <- c(Contexts, context) 
-                           tmp[Contexts == context] <- name
+
+                           if ( is.na(tmp[Contexts == context]) ) { tmp[Contexts == context] <- name }
+                           else { tmp[Contexts == context] <- paste(tmp[Contexts == context], name, sep="   ") }
                         }
                         tmp[is.na(tmp)] <- ""
                         tmp <- paste(tmp, collapse=";", sep="") 
