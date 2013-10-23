@@ -3,7 +3,6 @@
 
 ODM2R <- function( ODMfile="" )
 {
-   library(XML)
 
    if (ODMfile == "") ODMfile <- file.choose()
    Rfile <- paste(basename(ODMfile),".R",sep="")   

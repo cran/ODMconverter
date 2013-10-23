@@ -10,7 +10,6 @@ cat(paste("officefile =", officefile), "\n")
 
 if ( grepl("\\.xlsx$", officefile ,ignore.case=T) )
 {
-   library(xlsx)
    csv <- read.xlsx(officefile, 1, header=F, stringsAsFactors=F, colIndex=1:54)
 }
 else
@@ -43,7 +42,7 @@ f10 <- function (x) gsub("\x94","&#246;",x)
 f11 <- function (x) gsub("\x81","&#252;",x)
 f12 <- function (x) gsub("\xe1","&#223;",x)
 f13 <- function (x) gsub("\xE4","ae",x)
-f14 <- function (x) gsub("\xB5","u",x)
+f14 <- function (x) gsub("\xC2\xB5","&#181;",x)   # micro
 f15 <- function (x) gsub("\xFC","ue",x)
 csv <- apply(csv,2, f1)
 csv <- apply(csv,2, f2)
@@ -78,9 +77,20 @@ Context <- csv[11,5:usedCols]
 filename <- Form
 if (StudyOID != "") filename <- paste(filename, StudyOID, sep="_")
 filename <- paste(filename, ".xml", sep="")
+# remove \/:*?\"<>| from filename
+filename <- gsub("\\","",filename, fixed=T)
+filename <- gsub("/","",filename, fixed=T)
+filename <- gsub(":","",filename, fixed=T)
+filename <- gsub(":","",filename, fixed=T)
+filename <- gsub("*","",filename, fixed=T)
+filename <- gsub("?","",filename, fixed=T)
+filename <- gsub("\"","",filename, fixed=T)
+filename <- gsub("<","",filename, fixed=T)
+filename <- gsub(">","",filename, fixed=T)
+filename <- gsub("|","",filename, fixed=T)
 print(paste("Generating", filename))
-
 sink(filename)
+
 cat("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\r", 
     "<ODM xmlns=\"http://www.cdisc.org/ns/odm/v1.3\"\r", 
     "Description=\"", Form, " ", StudyOID, " ", Condition, "\"\r",
@@ -120,18 +130,29 @@ aliastags <- ""
 IG <- 0
 CL <- 0
 CLxml <- ""
+IGstart <- 1
 for (i in 1:n) {
    line <- csv[i+11,]
    line[is.na(line)] <- ""
-   if (tolower(line[1]) == "itemgroup") {
-      IG <- IG + 1
-   }
+   line[1] <- tolower(line[1])
+   if (line[1] == "itemgroup")
+   {   IG <- IG + 1 }
+   else if (IG == 0 && nchar(line[1]) >0) { IGstart <- 0 }
 }
-for (i in 1:IG) {
+
+for (i in IGstart:IG) {
    cat("<ItemGroupRef ItemGroupOID=\"IG.", i, "\" Mandatory=\"Yes\" OrderNumber=\"",i,"\" />\r",
        sep="")
 }
 cat("</FormDef>\r")
+
+# first items without itemgroup (undefined item group)
+if (IGstart == 0) 
+{
+      cat("<ItemGroupDef OID=\"IG.0\" Name=\"Undefined item group\" Repeating=\"No\">\n",
+           "   <Description>\n      <TranslatedText xml:lang=\"en\">Undefined item group</TranslatedText>\n   </Description>\n",
+          sep="")
+}
 
 IG <- 0
 itemno <- 0
@@ -141,9 +162,10 @@ for (i in 1:n) {
    line[1] <- tolower(line[1]) 
    nextline <- csv[i+12,]
    nextline[is.na(nextline)] <- ""
-   if (line[1] == "itemgroup") {
+   if (line[1] == "itemgroup") 
+   {
       IG <- IG + 1
-      if (IG > 1) cat(paste(aliastags, "</ItemGroupDef>\n", sep=""))
+      if (IG > IGstart) cat(paste(aliastags, "</ItemGroupDef>\n", sep=""))
       aliastags <- ""
       itemno <- 0
 
@@ -152,7 +174,7 @@ for (i in 1:n) {
       if (en == "") en <- name
       de <- as.character(line[4])
       if (de == "") de <- en   
-	translated <- paste("      <TranslatedText xml:lang=\"en\">", en, "</TranslatedText>\n",
+      translated <- paste("      <TranslatedText xml:lang=\"en\">", en, "</TranslatedText>\n",
                           "      <TranslatedText xml:lang=\"de\">", de, "</TranslatedText>\n", sep="")
       cat("<ItemGroupDef OID=\"IG.", IG, "\" Name=\"", name, "\" Repeating=\"No\">\n",
           "   <Description>\n", translated,  "   </Description>\n",
@@ -185,7 +207,7 @@ for (i in 1:n) {
             line[1] == "boolean" || line[1] == "time"    || line[1] == "date" ) {
       itemno <- itemno + 1
       cat("   <ItemRef ItemOID=\"I.", 1000 * IG + itemno, 
-          "\" Mandatory=\"Yes\" OrderNumber=\"", itemno, "\" />\n", sep="")
+           "\" Mandatory=\"Yes\" OrderNumber=\"", itemno, "\" />\n", sep="")
    }
 }
 cat(paste(aliastags, "</ItemGroupDef>\n", sep=""))

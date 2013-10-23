@@ -2,7 +2,6 @@
 # license: GPL
 
 ODM2office <- function( ODMfile="", filetype="csv") {
-library(XML)
 
 if (ODMfile == "") ODMfile <- file.choose()
 
@@ -182,7 +181,6 @@ if (filetype == "csv")   cat("Output:",csvfile,"\n")
 
 if (filetype == "xlsx") 
 {
-   library(xlsx)
    suppressWarnings( csv <- read.csv2(csvfile, header=F, as.is=T,colClasses=rep("character",54) ) )
    xlsxfile <- paste(Form, "_", StudyOID, ".xlsx",sep="")
    cat("Output:",xlsxfile,"\n")
