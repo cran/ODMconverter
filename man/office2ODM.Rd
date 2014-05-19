@@ -14,7 +14,8 @@ Output: CDISC ODM format (Version 1.3; see example)\cr
   }
 }
 \references{
-   Automatic conversion of ODM format with semantic annotation (manuscript in preparation)
+   Dugas M, Dugas-Breit S. Integrated data management for clinical studies: automatic transformation of data models with semantic annotations for principal investigators, data managers and statisticians.\cr
+   PLoS One. 2014 Feb 28;9(2):e90492
 }
 \author{ Martin Dugas (dugas@uni-muenster.de) }
 \examples{

@@ -74,7 +74,8 @@ for (i in 1: length(IGnodes) )
    
    newIG <- T
    ItemRefNodes <- IGnodes[[i]][names(xmlChildren(IGnodes[[i]]))=="ItemRef"]
-   for (k in 1: length(ItemRefNodes))
+   ### avoid error with empty itemgroups
+   if (length(ItemRefNodes) > 0) for (k in 1: length(ItemRefNodes))
    {
       ItemOID <- xmlAttrs(ItemRefNodes[[k]])["ItemOID"]
       for (m in 1: length(IDefnodes) )
