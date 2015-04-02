@@ -5,7 +5,7 @@ ODM2R <- function( ODMfile="" )
 {
 
    if (ODMfile == "") ODMfile <- file.choose()
-   Rfile <- paste(basename(ODMfile),".R",sep="")   
+   Rfile <- paste(ODMfile,".R",sep="")   
    print(paste("Rfile=",Rfile,sep=""))
    sink(Rfile)
 

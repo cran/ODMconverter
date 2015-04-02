@@ -168,7 +168,7 @@ for (i in 1: length(IGnodes) ) {
             if (withUMLS) 
             {
                # with UMLS codes
-               cat("               <entry>\r                  <observation classCode=\"OBS\" moodCode=\"DEF\">\r")
+               cat("               <entry>\r                  <act classCode=\"ACT\" moodCode=\"DEF\">\r")
                UMLScode <- ""
                anodes <- Inode[names(xmlChildren(Inode)) == "Alias"]
                if (length(anodes) > 0 ) for (ii in 1: length(anodes) )
@@ -184,7 +184,7 @@ for (i in 1: length(IGnodes) ) {
                cat(paste("                     <code code=\"", UMLScode, "\" ",
                               "codeSystem=\"2.16.840.1.113883.6.86\" codeSystemName=\"UMLS\" displayName=\"",
                               itemtextlong, "\"/>\r",sep=""))
-               cat("                  </observation>\r               </entry>\r")
+               cat("                  </act>\r               </entry>\r")
             }
             else {
                # no semantic annotations
