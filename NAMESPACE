@@ -1,4 +1,5 @@
 import(XML)
 import(xlsx)
+importFrom("utils", "read.csv2", "read.delim2", "write.table")
 # Export all names
 exportPattern(".")

@@ -1,7 +1,7 @@
 # Martin Dugas 2013
 # license: GPL
 
-ODM2R <- function( ODMfile="" )
+ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
 {
 
    if (ODMfile == "") ODMfile <- file.choose()
@@ -48,24 +48,28 @@ ODM2R <- function( ODMfile="" )
    for (i in 1: length(FormDefNodes) )
    {
       FoNode <- FormDefNodes[[i]]
-	FoOID <- xmlAttrs(FoNode)["OID"] 
-	FormOID <- gsub(".","_",FoOID, fixed=T)
-      FormName <- xmlAttrs(FoNode)["Name"]
-	FormName <- gsub("'","_",FormName, fixed=T)
+      FoOID <- xmlAttrs(FoNode)["OID"]
+      if (Form_OID != "" && Form_OID != FoOID) next
+      
+      FormOID <- gsub(".","_",FoOID, fixed=T)
 
       # Form: FormOID
       IGRefNodes <- FoNode[names(xmlChildren(FoNode))=="ItemGroupRef"]
       newForm <- T
       for (k in 1: length(IGRefNodes))
-	{
-	   IGRefNode <- IGRefNodes[[k]]
-	   ItemGroupOID <- xmlAttrs(IGRefNode)["ItemGroupOID"]
+      {
+         IGRefNode <- IGRefNodes[[k]]
+         ItemGroupOID <- xmlAttrs(IGRefNode)["ItemGroupOID"]
          # ItemGroup layer
          for (j in 1: length(ItemGroupDefNodes) )
          {
             IGDefNode <- ItemGroupDefNodes[[j]]
             IGDefNodeOID  <- xmlAttrs(IGDefNode)["OID"]
+            if (IG_OID != "" && IG_OID != IGDefNodeOID) next
+            
             IGDefNodeName <- xmlAttrs(IGDefNode)["Name"]
+            IGDefNodeName2 <- IGDefNodeName
+            IGDefNodeName3 <- IGDefNodeName
             tmp <- xmlValue(IGDefNode[["Description"]][["TranslatedText"]])
             if (!is.na(tmp))
             {
@@ -160,7 +164,8 @@ ODM2R <- function( ODMfile="" )
    cat("attr(odmdata, \"Condition\")        <- \"", Condition, "\"\n", sep="")
    cat("attr(odmdata, \"StudyName\")        <- \"", StudyName, "\"\n", sep="")
    cat("attr(odmdata, \"StudyDescription\") <- \"", StudyDescription, "\"\n", sep="")
-   cat("attr(odmdata, \"Form\")             <- \"", FormName, "\"\n", sep="")
+   cat("attr(odmdata, \"Form_OID\")         <- \"", Form_OID, "\"\n", sep="")
+   cat("attr(odmdata, \"IG_OID\")           <- \"", IG_OID, "\"\n", sep="")
    cat("attr(odmdata, \"FirstName\")        <- \"", FirstName, "\"\n", sep="")
    cat("attr(odmdata, \"LastName\")         <- \"", LastName, "\"\n", sep="")
    cat("attr(odmdata, \"Organization\")     <- \"", Organization, "\"\n\n", sep="")
@@ -199,7 +204,7 @@ ODM2R <- function( ODMfile="" )
       cat("\")\n\n")
 	
    # VALUE LABELS
-   for (i in 1: length(cvec))
+   if (length(cvec) > 0) for (i in 1: length(cvec))
    {
       if (cvec[i] == "") next
       for(o in 1: length(CodeListNodes) ) 
@@ -299,13 +304,16 @@ ODM2R <- function( ODMfile="" )
    }
    # Output Alias / Item
    tmp <- vector()
-   cat("attr(odmdata, \"Alias_Items\") <- matrix(ncol=3,byrow=T, data=c(\n")
-   for (i in 1:length(ainfo) )
+   if (length(ainfo) > 0)
    {
-      tmp[i] <- paste("\"", ainfo[[i]][1], "\",\"", ainfo[[i]][2], "\",\"", ainfo[[i]][3], "\"", sep="") 
+      cat("attr(odmdata, \"Alias_Items\") <- matrix(ncol=3,byrow=T, data=c(\n")
+      for (i in 1:length(ainfo) )
+      {
+         tmp[i] <- paste("\"", ainfo[[i]][1], "\",\"", ainfo[[i]][2], "\",\"", ainfo[[i]][3], "\"", sep="") 
+      }
+      cat( paste(tmp, sep="", collapse=",\n") )
+      cat(" ))\n")
    }
-   cat( paste(tmp, sep="", collapse=",\n") )
-   cat(" ))\n")
    #
    sink()
    cat(paste("Number of variables: ", length(ivec), "\n", sep=""))
