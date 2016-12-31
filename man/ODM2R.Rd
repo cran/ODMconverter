@@ -3,8 +3,9 @@
 \title{ ODM2R }
 \description{
 ODM2R transforms ODM file into source code for R data frame "odmdata".\cr
+Clinical data (if available) is converted into source code for R data frame "clindata"\cr
 Input: File in CDISC ODM format (Version 1.3; see example)\cr
-Output: R source code for data frame "odmdata" with ODM attributes (see example).
+Output: R source code for data frame "odmdata" (optional: data frame "clindata") with ODM attributes (see example).
 }
 \usage{ ODM2R(ODMfile="", Form_OID="", IG_OID="") }
 \arguments{

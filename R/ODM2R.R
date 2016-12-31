@@ -1,16 +1,17 @@
-# Martin Dugas 2013
+# Martin Dugas, Julian Varghese 2016
 # license: GPL
 
-ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
+.ODMMetaData2R <- function( ODMfile, Form_OID, IG_OID )
 {
-
-   if (ODMfile == "") ODMfile <- file.choose()
-   Rfile <- paste(ODMfile,".R",sep="")   
-   print(paste("Rfile=",Rfile,sep=""))
-   sink(Rfile)
-
    # Parse ODM-File
    ODM = xmlRoot(xmlTreeParse(ODMfile),useInternalNodes=TRUE)
+   MD <- ODM[["Study"]][["MetaDataVersion"]]
+   if (is.null(MD)) { 
+      cat("odmdata <- data.frame()\n")
+      return("No MetaData available\n")
+      break 
+   }
+
    ODMDescription <- xmlAttrs(ODM)["Description"]
    StudyOID <- xmlAttrs(ODM[["Study"]])["OID"]
    StudyName <- xmlValue(ODM[["Study"]][["GlobalVariables"]][["StudyName"]])
@@ -22,8 +23,7 @@ ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
    FirstName <- xmlValue(ODM[["AdminData"]][["User"]][["FirstName"]])
    LastName <- xmlValue(ODM[["AdminData"]][["User"]][["LastName"]])
    Organization <- xmlValue(ODM[["AdminData"]][["User"]][["Organization"]])
-
-   MD <- ODM[["Study"]][["MetaDataVersion"]]
+   
    Condition <- xmlAttrs(MD[["StudyEventDef"]])["Name"]
    FormDefNodes <- MD[names(xmlChildren(MD)) == "FormDef"]
    ItemGroupDefNodes <- MD[names(xmlChildren(MD)) == "ItemGroupDef"]
@@ -216,7 +216,7 @@ ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
             CLitems <- CodeListNode[names(xmlChildren(CodeListNode))=="CodeListItem"]
             # levels
             cat(paste("odmdata$", ivec[i], " <- factor(levels=c(", sep=""))
-		for(p in 1: length(CLitems) ) 
+            if (length(CLitems) > 0) for (p in 1: length(CLitems) ) 
             {
                CLitem <- CLitems[[p]]
                CodeValue <- xmlAttrs(CLitem)["CodedValue"]
@@ -231,7 +231,7 @@ ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
             #
             # labels
             cat(paste("attr(odmdata$", ivec[i], ",\"labels\") <- c(", sep=""))
-		for(p in 1: length(CLitems) ) 
+            if (length(CLitems) > 0) for (p in 1: length(CLitems) ) 
             {
                CLitem <- CLitems[[p]]
                CLItemText <- xmlValue(CLitem[["Decode"]][["TranslatedText"]])
@@ -241,7 +241,7 @@ ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
             }
             cat(")\n")
             cat(paste("attr(odmdata$", ivec[i], ",\"labels2\") <- c(", sep=""))
-            for(p in 1: length(CLitems) ) 
+            if (length(CLitems) > 0) for (p in 1: length(CLitems) ) 
             {
                CLitem <- CLitems[[p]]
                CLItemText <- xmlValue(CLitem[["Decode"]][2][["TranslatedText"]])
@@ -254,7 +254,7 @@ ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
             #
             # UMLS-codes
             contexts <- vector()
-            for (p in 1: length(CLitems) ) 
+            if (length(CLitems) > 0) for (p in 1: length(CLitems) ) 
             {
                CLitem <- CLitems[[p]]
                AlNodes <- CLitem[tolower(names(xmlChildren(CLitem)))=="alias"]
@@ -272,7 +272,7 @@ ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
                for (p in 1: length(contexts) ) 
                {
                   cnames <- rep("",length(CLitems))
-                  for (pp in 1: length(CLitems) ) 
+                  if (length(CLitems) > 0) for (pp in 1: length(CLitems) ) 
                   {
                      CLitem <- CLitems[[pp]]
                      AlNodes <- CLitem[tolower(names(xmlChildren(CLitem)))=="alias"]
@@ -315,6 +315,156 @@ ODM2R <- function( ODMfile="", Form_OID="", IG_OID="" )
       cat(" ))\n")
    }
    #
+   return(paste0("MetaData: ", length(ivec), " items\n"))
+}
+
+.ODMClinicalData2R <- function(ODMfile, Form_OID, IG_OID)
+{
+  subjects <- vector()
+  ODM = xmlRoot(xmlTreeParse(ODMfile),useInternalNodes=TRUE)
+  ClinDatNodes <- ODM[names(xmlChildren(ODM))=="ClinicalData"]
+  if (length(ClinDatNodes)==0) { 
+     cat("clindata <- data.frame()\n")
+     return ("No ClinicalData\n")
+     break 
+  }
+
+  cat("clindata <- data.frame(StudyOID=character(),\nMetaDataVersionOID=character(),\nSubjectKey=character(),
+      \nLocationOID=character(),\nStudyEventOID=character(),\nStudyEventRepeatKey=character(),
+      \nFormOID=character(),\nFormRepeatKey=character(),\nItemGroupOID=character(),
+      \nItemGroupRepeatKey=character(),\nItemOID=character(), \nValue=character(), 
+      stringsAsFactors = F)\n")
+  
+  valueCounter<-1 #add line item value by item value
+  
+  # Go through all Clinical Data Nodes
+  for (i1 in 1: length(ClinDatNodes) )
+  {
+    ClinDatNode <- ClinDatNodes[[i1]]
+    StudyOID <- xmlAttrs(ClinDatNode)["StudyOID"]
+    MetaDataVersionOID <- xmlAttrs(ClinDatNode)["MetaDataVersionOID"]
+    
+    SubjectDataNodes <-ClinDatNode[names(xmlChildren(ClinDatNode))=="SubjectData"]
+    
+    # Go through all SubjectDataNodes
+    if (length(SubjectDataNodes)>0) for (i2 in 1: length(SubjectDataNodes) )
+    {
+      SubjectDataNode=SubjectDataNodes[[i2]]
+      SubjectKey <- xmlAttrs(SubjectDataNode)["SubjectKey"]
+      subjects <- c(subjects, SubjectKey)
+      
+      SiteRefNodes <-SubjectDataNode[names(xmlChildren(SubjectDataNode))=="SiteRef"]
+      SiteRefNode <- NULL
+      LocationOID <- NULL
+      if (length(SiteRefNodes)>0){
+        SiteRefNode <- SiteRefNodes[[1]]
+        LocationOID <- xmlAttrs(SiteRefNode)["LocationOID"]
+      }
+
+
+      
+      # Go through all StudyEventDataNodes (if no StudyEventDataNodes available look for FormDataNodes)
+      StudyEventDataNodes <- SubjectDataNode[names(xmlChildren(SubjectDataNode))=="StudyEventData"]
+      for (i3 in 1: length(StudyEventDataNodes) )
+      {
+        StudyEventOID<-NULL
+        StudyEventRepeatKey <- NULL
+        if (length(StudyEventDataNodes)>0){
+          StudyEventDataNode <- StudyEventDataNodes[[i3]]
+          StudyEventOID <- xmlAttrs(StudyEventDataNode)["StudyEventOID"]
+          StudyEventRepeatKey <- xmlAttrs(StudyEventDataNode)["StudyEventRepeatKey"]
+          # Go through all FormDataNodes
+          FormDataNodes <- StudyEventDataNode[names(xmlChildren(StudyEventDataNode))=="FormData"]
+        }
+        # if no StudyEventDataNodes available look for FormDataNodes
+        else{
+          FormDataNodes <- SubjectDataNode[names(xmlChildren(SubjectDataNode))=="FormData"]
+        }
+        for (i4 in 1: length(FormDataNodes) )
+        {
+          if (length(FormDataNodes)==0) break
+          FormDataNode <- FormDataNodes[[i4]] 
+          FormOID<- xmlAttrs(FormDataNode)["FormOID"]
+          if (Form_OID != "" && Form_OID != FormOID) next
+
+          FormRepeatKey <- xmlAttrs(FormDataNode)["FormRepeatKey"]
+     
+          # Go through all ItemGroupData Nodes
+          ItemGroupDataNodes <- FormDataNode[names(xmlChildren(FormDataNode))=="ItemGroupData"]
+          for (i5 in 1: length(ItemGroupDataNodes) )
+          {
+            if (length(ItemGroupDataNodes)==0) break
+            ItemGroupDataNode <- ItemGroupDataNodes[[i5]]
+            ItemGroupOID <- xmlAttrs(ItemGroupDataNode)["ItemGroupOID"]
+            if (IG_OID != "" && IG_OID != ItemGroupOID) next
+
+            
+            ItemGroupRepeatKey <- xmlAttrs(ItemGroupDataNode)["ItemGroupRepeatKey"]
+
+            
+            # Go through all ItemData Nodes
+            ItemDataNodes <- ItemGroupDataNode[names(xmlChildren(ItemGroupDataNode))=="ItemData"]
+            for (i6 in 1: length(ItemDataNodes) )
+            {
+              if (length(ItemDataNodes)==0) break
+              ItemGroupDataNodes
+              ItemDataNode <- ItemDataNodes[[i6]]
+              ItemOID <- xmlAttrs(ItemDataNode)["ItemOID"]
+              cat("clindata[", valueCounter,",\"ItemOID\"]<-","\"",ItemOID,"\"","\n",sep="") # Add ItemOID
+              
+              Value <- xmlAttrs(ItemDataNode)["Value"]
+              cat("clindata[", valueCounter,",\"Value\"]<-","\"",Value,"\"","\n",sep="") # Add Item value
+              
+              # Insert Values of Upper Nodes
+              cat("clindata[", valueCounter,",\"StudyOID\"]<-","\"",StudyOID,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"MetaDataVersionOID\"]<-","\"",MetaDataVersionOID,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"SubjectKey\"]<-","\"",SubjectKey,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"LocationOID\"]<-","\"",LocationOID,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"StudyEventOID\"]<-","\"",StudyEventOID,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"StudyEventRepeatKey\"]<-","\"",StudyEventRepeatKey,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"FormOID\"]<-","\"",FormOID,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"FormRepeatKey\"]<-","\"",FormRepeatKey,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"ItemGroupOID\"]<-","\"",ItemGroupOID,"\"","\n",sep="")
+              cat("clindata[", valueCounter,",\"ItemGroupRepeatKey\"]<-","\"",ItemGroupRepeatKey,"\"","\n",sep="")
+              
+              # Start new line, and insert old value for upper nodes
+              valueCounter <- valueCounter+1
+
+            }
+          }
+        }
+      } 
+    }
+  }
+  
+  # return value: info text
+  first_subject <- ""
+  last_subject <- ""
+  if (length(subjects)>0)
+  {
+     first_subject <- subjects[1]
+     last_subject <- subjects[length(subjects)]
+  }
+  subjects <- unique(subjects)
+  subject_text <- ""
+  if (length(subjects) == 1) subject_text <- paste0(" (", first_subject,")")
+  if (length(subjects)  > 1) subject_text <- paste0(" (", first_subject," .. ", last_subject, ")")
+  return(paste0("ClinicalData: ",length(subjects), " subjects", subject_text, ", ", valueCounter-1, " values\n" ))
+}
+
+ODM2R <- function( ODMfile="", Form_OID="", IG_OID="")
+{
+   cat("ODM2R\n")
+   if (ODMfile == "") ODMfile <- file.choose()
+   cat(paste0("ODMfile=",ODMfile,"\n"))
+   Rfile <- paste(ODMfile,".R",sep="")   
+   cat(paste0("Rfile=",Rfile,"\n"))
+   sink(Rfile)
+
+   resultMetaData <- .ODMMetaData2R( ODMfile, Form_OID, IG_OID )
+
+   resultClinicalData <- .ODMClinicalData2R( ODMfile, Form_OID, IG_OID )
+
    sink()
-   cat(paste("Number of variables: ", length(ivec), "\n", sep=""))
+   cat(paste0(resultMetaData, resultClinicalData))
 }

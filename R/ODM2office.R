@@ -132,7 +132,7 @@ for (i in 1: length(IGnodes) )
                   {
                      found <- T
                      CLInodes <- CLnode[names(xmlChildren(CLnode)) == "CodeListItem"]
-                     for (iii in 1:length(CLInodes) )
+                     if (length(CLInodes)>0) for (iii in 1:length(CLInodes) )
                      {
                         CLInode <- CLInodes[[iii]]
                         CodedValue <- xmlAttrs(CLInode)["CodedValue"]
